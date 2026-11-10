@@ -202,6 +202,16 @@ details summary{cursor:pointer;color:var(--mu);font-size:.9rem}
         <button class="btn o sm" id="tg-detect" style="margin-top:10px">🔍 រក Chat ID ពី Bot</button>
       </div>
       <div id="tg-msg" class="okmsg"></div>
+      <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">
+      <label>☁️ Auto-Sync ពី Render ចូល Excel លើ PC (H:\Registration\registrations.xlsx) — <span id="rs-st" style="font-weight:600"></span></label>
+      <input id="rs-url" placeholder="https://registration-gocw.onrender.com">
+      <label>Render Admin PIN (ទុកទទេ បើប្រើ PIN ដូច PC)</label>
+      <input id="rs-pin" type="password" inputmode="numeric" placeholder="Admin PIN នៅលើ Render">
+      <div class="row">
+        <button class="btn sm" id="rs-save" style="margin-top:10px">រក្សាទុក & Sync ឥឡូវនេះ</button>
+        <button class="btn o sm" id="rs-now" style="margin-top:10px">🔄 Sync ឥឡូវនេះ</button>
+      </div>
+      <div id="rs-msg" class="okmsg"></div>
     </details>
   </div>
 </div>
@@ -771,6 +781,7 @@ function showAdminLocked(){
 async function loadAdminAiSettings(){
   $("gem-msg").textContent="";
   $("tg-msg").textContent="";
+  $("rs-msg").textContent="";
   $("gem-mod").value=getGeminiModel();
   if(activeApi!==null){
     try{
@@ -781,6 +792,9 @@ async function loadAdminAiSettings(){
       $("gem-st").textContent=s.geminiConfigured?("Server Ready ("+s.geminiMask+")"):"Not set on server";
       $("tg-st").textContent=s.telegramBotConfigured?("Bot Ready ("+s.telegramTokenMask+")"):"Not set";
       $("tg-cid").value=s.telegramChatId||"";
+      $("rs-url").value=s.renderUrl||"";
+      const st=s.syncStatus||{};
+      $("rs-st").textContent=s.renderUrl?(st.lastError?("Error: "+st.lastError):(st.lastAction||"Configured")):"Not set";
       refreshAiMode();
       return;
     }catch(e){}
@@ -788,6 +802,7 @@ async function loadAdminAiSettings(){
   const bk=getBrowserGeminiKey();
   $("gem-st").textContent=bk?"Browser Key Saved":"Not set (QR+OCR fallback)";
   $("tg-st").textContent="ត្រូវការ Server / Render";
+  $("rs-st").textContent="ប្រើសម្រាប់ Server លើ PC ប៉ុណ្ណោះ";
   refreshAiMode();
 }
 
@@ -1027,6 +1042,30 @@ $("tg-bak").onclick=async()=>{
     await apiFetch("/api/admin/telegram-backup",{method:"POST",body:"{}"});
     $("adm-msg").textContent="✓ បានផ្ញើ registrations.xlsx ទៅ Telegram រួចរាល់";
   }catch(err){alert(err.message||"Telegram backup failed")}
+};
+$("rs-save").onclick=async()=>{
+  if(activeApi===null){alert("មុខងារ Sync ដំណើរការជាមួយ Server លើ PC ប៉ុណ្ណោះ");return}
+  const url=$("rs-url").value.trim().replace(/\/+$/,""),pin=$("rs-pin").value.trim();
+  try{
+    const payload={renderUrl:url};
+    if(pin)payload.renderAdminPin=pin;
+    const res=await apiFetch("/api/admin/settings",{method:"POST",body:JSON.stringify(payload)});
+    $("rs-pin").value="";
+    await loadAdminAiSettings();
+    await loadAdminRows();
+    const st=res.syncStatus||{};
+    $("rs-msg").textContent=st.lastError?("⚠️ "+st.lastError):("✓ "+(st.lastAction||"បានរក្សាទុក"));
+  }catch(err){alert(err.message||"Save Render sync failed")}
+};
+$("rs-now").onclick=async()=>{
+  if(activeApi===null){alert("មុខងារ Sync ដំណើរការជាមួយ Server លើ PC ប៉ុណ្ណោះ");return}
+  $("rs-msg").textContent="⏳ កំពុង Sync...";
+  try{
+    const res=await apiFetch("/api/admin/sync-now",{method:"POST",body:"{}"});
+    await loadAdminAiSettings();
+    await loadAdminRows();
+    $("rs-msg").textContent="✓ Synced ("+res.total+" ជួរ, +"+res.pulled+" ទាញមក, +"+res.pushed+" រុញទៅ)";
+  }catch(err){$("rs-msg").textContent="⚠️ "+(err.message||"Sync failed")}
 };
 
 async function openAdminTab(){

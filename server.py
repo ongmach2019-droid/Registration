@@ -7,7 +7,7 @@ registrations.xlsx in the same directory using openpyxl.
 from __future__ import annotations
 
 import argparse
-from datetime import date
+from datetime import date, datetime
 import hmac
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -19,9 +19,10 @@ import socket
 import sys
 import tempfile
 import threading
+import time
 from typing import Any
 import urllib.error
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 import urllib.request
 
 from openpyxl import Workbook, load_workbook
@@ -30,6 +31,7 @@ from openpyxl.utils import get_column_letter
 
 BASE_DIR = Path(__file__).resolve().parent
 ENV_PATH = BASE_DIR / ".env"
+SYNC_STATE_PATH = BASE_DIR / ".sync_state.json"
 DB_PATH = Path(os.environ.get("REGISTRATION_DB", BASE_DIR / "registrations.xlsx"))
 HTML_PATH = BASE_DIR / "index.html"
 HOST = os.environ.get("HOST", "0.0.0.0")
@@ -152,6 +154,21 @@ def _get_telegram_token() -> str:
 
 def _get_telegram_chat_id() -> str:
     return os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+
+
+def _get_render_url() -> str:
+    return os.environ.get("RENDER_URL", "").strip().rstrip("/")
+
+
+def _get_render_pin() -> str:
+    return os.environ.get("RENDER_ADMIN_PIN", "").strip() or _get_admin_pin()
+
+
+def _get_sync_interval() -> int:
+    try:
+        return max(5, int(os.environ.get("SYNC_INTERVAL", "10")))
+    except ValueError:
+        return 10
 
 
 def _mask_secret(value: str) -> str:
@@ -690,7 +707,17 @@ def delete_registration(ref: str) -> bool:
         if len(remaining) == len(rows):
             return False
         _write_rows_unlocked(remaining)
-        return True
+
+    if _get_render_url():
+        with SYNC_LOCK:
+            state = _load_sync_state()
+            deleted = set(state.get("deleted", []))
+            deleted.add(ref)
+            state["deleted"] = sorted(deleted)
+            state.get("rows", {}).pop(ref, None)
+            _save_sync_state(state)
+        _delete_remote_async(ref)
+    return True
 
 
 def export_excel_bytes() -> bytes:
@@ -704,6 +731,185 @@ def export_excel_bytes() -> bytes:
             raise ExcelLockedError(
                 f"Cannot read '{DB_PATH.name}' because it is locked by Excel."
             ) from exc
+
+
+SYNC_LOCK = threading.Lock()
+_SYNC_STATUS: dict[str, Any] = {"running": False, "lastSyncAt": "", "lastError": "", "lastAction": ""}
+_SYNC_THREAD_STARTED = False
+
+
+def _load_sync_state() -> dict[str, Any]:
+    if not SYNC_STATE_PATH.exists():
+        return {"rows": {}, "deleted": []}
+    try:
+        data = json.loads(SYNC_STATE_PATH.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return {"rows": data.get("rows") or {}, "deleted": data.get("deleted") or []}
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {"rows": {}, "deleted": []}
+
+
+def _save_sync_state(state: dict[str, Any]) -> None:
+    SYNC_STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _row_sig(row: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        _clean_text(row.get("ref")),
+        _clean_text(row.get("name")),
+        _clean_text(row.get("phone")),
+        _clean_text(row.get("tg")),
+        _clean_text(row.get("org")),
+        _clean_text(row.get("type")),
+        _clean_text(row.get("ticket")),
+        round(_parse_amount(row.get("amount")), 2),
+        bool(row.get("paid")),
+        _clean_text(row.get("date"))[:10],
+    )
+
+
+def _render_request(method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    base = _get_render_url()
+    if not base:
+        raise ValueError("RENDER_URL is not configured.")
+    pin = _get_render_pin()
+    data = json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None
+    headers = {"X-Admin-Pin": pin, "Content-Type": "application/json"}
+    req = urllib.request.Request(f"{base}{path}", data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _delete_remote_async(ref: str) -> None:
+    def _run() -> None:
+        try:
+            _render_request("DELETE", f"/api/registrations/{quote(ref, safe='')}")
+        except Exception:
+            pass
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+def sync_with_render_once() -> dict[str, Any]:
+    """Perform safe two-way sync between Render server and local registrations.xlsx."""
+    render_url = _get_render_url()
+    if not render_url:
+        return {"ok": False, "error": "RENDER_URL is not configured."}
+
+    with SYNC_LOCK:
+        _SYNC_STATUS["running"] = True
+        try:
+            remote_resp = _render_request("GET", "/api/registrations")
+            remote_list = [
+                _normalize_row(r, allow_paid=True, validate_pricing=False)
+                for r in (remote_resp.get("rows") or [])
+                if isinstance(r, dict) and _clean_text(r.get("ref"))
+            ]
+            remote_by_ref = {r["ref"]: r for r in remote_list}
+
+            with DB_LOCK:
+                local_list = _read_rows_unlocked()
+                local_by_ref = {r["ref"]: r for r in local_list}
+                state = _load_sync_state()
+                prev_by_ref: dict[str, dict[str, Any]] = state.get("rows", {})
+                deleted_set: set[str] = set(state.get("deleted", []))
+
+                merged_list: list[dict[str, Any]] = []
+                push_to_render: list[dict[str, Any]] = []
+                local_changed = False
+                pulled = 0
+
+                for local_row in local_list:
+                    ref = local_row["ref"]
+                    deleted_set.discard(ref)
+                    if ref not in remote_by_ref:
+                        merged_list.append(local_row)
+                        push_to_render.append(local_row)
+                        continue
+
+                    remote_row = remote_by_ref[ref]
+                    prev_row = prev_by_ref.get(ref)
+                    if _row_sig(local_row) == _row_sig(remote_row):
+                        merged_list.append(local_row)
+                        continue
+
+                    if prev_row and _row_sig(local_row) != _row_sig(prev_row) and _row_sig(remote_row) == _row_sig(prev_row):
+                        merged_list.append(local_row)
+                        push_to_render.append(local_row)
+                    elif prev_row and _row_sig(remote_row) != _row_sig(prev_row) and _row_sig(local_row) == _row_sig(prev_row):
+                        merged_list.append(remote_row)
+                        local_changed = True
+                        pulled += 1
+                    else:
+                        chosen = dict(remote_row)
+                        if local_row.get("paid") or remote_row.get("paid"):
+                            chosen["paid"] = True
+                        if _row_sig(chosen) != _row_sig(local_row):
+                            local_changed = True
+                            pulled += 1
+                        if _row_sig(chosen) != _row_sig(remote_row):
+                            push_to_render.append(chosen)
+                        merged_list.append(chosen)
+
+                for remote_row in reversed(remote_list):
+                    ref = remote_row["ref"]
+                    if ref in local_by_ref or ref in deleted_set:
+                        continue
+                    merged_list.append(remote_row)
+                    local_changed = True
+                    pulled += 1
+
+                if local_changed:
+                    _write_rows_unlocked(merged_list)
+
+            if push_to_render:
+                _render_request("POST", "/api/registrations/bulk", {"rows": push_to_render})
+
+            _save_sync_state(
+                {
+                    "rows": {r["ref"]: r for r in merged_list},
+                    "deleted": sorted(deleted_set),
+                }
+            )
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            action = f"Synced ({len(merged_list)} total, +{pulled} pulled, +{len(push_to_render)} pushed)"
+            _SYNC_STATUS.update({"lastSyncAt": now_str, "lastError": "", "lastAction": action})
+            if pulled or push_to_render:
+                sys.stdout.write(f"[render-sync] {action} -> {DB_PATH.name}\n")
+            return {"ok": True, "total": len(merged_list), "pulled": pulled, "pushed": len(push_to_render), "lastSyncAt": now_str}
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="ignore")
+            msg = f"HTTP {exc.code}: {detail}"
+            _SYNC_STATUS["lastError"] = msg
+            return {"ok": False, "error": msg}
+        except Exception as exc:
+            _SYNC_STATUS["lastError"] = str(exc)
+            return {"ok": False, "error": str(exc)}
+        finally:
+            _SYNC_STATUS["running"] = False
+
+
+def _trigger_sync_async() -> None:
+    if not _get_render_url():
+        return
+    threading.Thread(target=sync_with_render_once, daemon=True).start()
+
+
+def ensure_sync_thread() -> None:
+    """Start background Render sync loop once if RENDER_URL is configured."""
+    global _SYNC_THREAD_STARTED
+    if _SYNC_THREAD_STARTED or not _get_render_url():
+        return
+    _SYNC_THREAD_STARTED = True
+
+    def _loop() -> None:
+        while True:
+            if _get_render_url():
+                sync_with_render_once()
+            time.sleep(_get_sync_interval())
+
+    threading.Thread(target=_loop, daemon=True).start()
 
 
 class RegistrationHandler(BaseHTTPRequestHandler):
@@ -762,6 +968,9 @@ class RegistrationHandler(BaseHTTPRequestHandler):
             "telegramBotConfigured": bool(tg_tok),
             "telegramTokenMask": _mask_secret(tg_tok),
             "telegramChatId": _get_telegram_chat_id(),
+            "renderUrl": _get_render_url(),
+            "renderPinConfigured": bool(os.environ.get("RENDER_ADMIN_PIN", "").strip()),
+            "syncStatus": dict(_SYNC_STATUS),
         }
 
     def _require_admin(self) -> bool:
@@ -809,6 +1018,8 @@ class RegistrationHandler(BaseHTTPRequestHandler):
                         "geminiModel": _get_gemini_model(),
                         "botConfigured": bool(_get_telegram_token()),
                         "telegramConfigured": bool(_get_telegram_token() and _get_telegram_chat_id()),
+                        "syncEnabled": bool(_get_render_url()),
+                        "syncStatus": dict(_SYNC_STATUS),
                     },
                 )
                 return
@@ -878,9 +1089,22 @@ class RegistrationHandler(BaseHTTPRequestHandler):
                         "GEMINI_MODEL": payload.get("geminiModel") if "geminiModel" in payload else None,
                         "TELEGRAM_BOT_TOKEN": payload.get("telegramBotToken") if "telegramBotToken" in payload else None,
                         "TELEGRAM_CHAT_ID": payload.get("telegramChatId") if "telegramChatId" in payload else None,
+                        "RENDER_URL": payload.get("renderUrl").rstrip("/") if isinstance(payload.get("renderUrl"), str) else None,
+                        "RENDER_ADMIN_PIN": payload.get("renderAdminPin") if "renderAdminPin" in payload else None,
                     }
                 )
+                ensure_sync_thread()
+                if "renderUrl" in payload or "renderAdminPin" in payload:
+                    sync_with_render_once()
                 self._send_json(HTTPStatus.OK, self._admin_settings_payload())
+                return
+
+            if path == "/api/admin/sync-now":
+                if not self._require_admin():
+                    return
+                res = sync_with_render_once()
+                status = HTTPStatus.OK if res.get("ok") else HTTPStatus.BAD_GATEWAY
+                self._send_json(status, {**res, "syncStatus": dict(_SYNC_STATUS)})
                 return
 
             if path == "/api/admin/telegram-backup":
@@ -905,6 +1129,7 @@ class RegistrationHandler(BaseHTTPRequestHandler):
                     raise ValueError("Expected JSON object.")
                 saved = upsert_registration(payload, allow_paid=False, validate_pricing=True)
                 _notify_telegram_async(_format_registration_alert(saved, "📋 New Registration (Pending)"))
+                _trigger_sync_async()
                 self._send_json(HTTPStatus.CREATED, {"ok": True, "row": saved})
                 return
 
@@ -915,6 +1140,7 @@ class RegistrationHandler(BaseHTTPRequestHandler):
                 if not isinstance(items, list):
                     raise ValueError("Expected a list of registrations.")
                 result = bulk_upsert_registrations(items)
+                _trigger_sync_async()
                 self._send_json(HTTPStatus.OK, {"ok": True, **result})
                 return
 
@@ -948,6 +1174,7 @@ class RegistrationHandler(BaseHTTPRequestHandler):
                 return
             header = "✅ Payment Confirmed" if updated.get("paid") else "⏳ Reverted to Pending"
             _notify_telegram_async(_format_registration_alert(updated, header))
+            _trigger_sync_async()
             self._send_json(HTTPStatus.OK, {"ok": True, "row": updated})
         except (json.JSONDecodeError, ValueError) as exc:
             self._send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
@@ -990,6 +1217,10 @@ def main() -> None:
     print(f"Excel database ready: {DB_PATH} ({count} registration(s))")
     if args.init_only:
         return
+
+    if _get_render_url():
+        print(f"Render sync enabled -> {_get_render_url()} (every {_get_sync_interval()}s)")
+        ensure_sync_thread()
 
     httpd = ThreadingHTTPServer((HOST, args.port), RegistrationHandler)
     lan_ip = _lan_ip()
