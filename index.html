@@ -45,6 +45,22 @@ th,td{padding:8px;border-bottom:1px solid var(--ln);text-align:left;white-space:
 .pill{padding:3px 10px;border-radius:99px;font-size:.78rem;background:var(--warn-bg);color:var(--warn);font-weight:600}.pill.p{background:var(--ok-bg);color:var(--ok)}
 .del{border:0;background:transparent;color:var(--mu);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:6px}.del:hover{color:#c0392b;background:var(--bg)}
 details summary{cursor:pointer;color:var(--mu);font-size:.9rem}
+.ai-hd{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ai-ico{width:42px;height:42px;border-radius:12px;background:#ccfbf1;color:#0f766e;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-tt{flex:1;min-width:0}
+.ai-tt h2{margin:0;font-size:1.02rem;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ai-tt p{margin:2px 0 0;font-size:.82rem;color:var(--mu)}
+.ai-pill{font-size:.72rem;padding:2px 8px;border-radius:99px;background:#ccfbf1;color:#0f766e;font-weight:600}
+.ai-act{display:flex;gap:10px;align-items:center}
+.ai-main{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;margin:0;border-radius:12px;background:#005f56;color:#fff;font-weight:700;cursor:pointer;padding:0 14px}
+.ai-main:hover{filter:brightness(1.07)}
+.ai-cam{width:46px;height:46px;margin:0;border-radius:12px;background:#ccfbf1;color:#0f766e;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.ai-cam:hover{filter:brightness(.96)}
+.ai-prev{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ai-prev img{max-height:140px;max-width:100%;border-radius:10px;border:1px solid var(--ln);object-fit:contain}
+.ai-cfg{margin-top:8px;font-size:.82rem}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ai-ico,:root:not([data-theme="light"]) .ai-cam,:root:not([data-theme="light"]) .ai-pill{background:#113936;color:#5eead4}}
+:root[data-theme="dark"] .ai-ico,:root[data-theme="dark"] .ai-cam,:root[data-theme="dark"] .ai-pill{background:#113936;color:#5eead4}
 </style></head><body><div class="w">
 <div class="hd">
   <div><h1>ចុះឈ្មោះចូលរួម</h1><p class="s">Conference Registration · បង់ប្រាក់តាម ABA · បញ្ជាក់តាម Telegram</p></div>
@@ -53,11 +69,39 @@ details summary{cursor:pointer;color:var(--mu);font-size:.9rem}
 <div class="tabs"><button id="t1" class="on">ចុះឈ្មោះ</button><button id="t2">Admin (Excel)</button></div>
 
 <div id="v1">
-<div class="c hide" id="sc"><h2>📷 ស្កេនកាត (ស្វ័យប្រវត្តិ)</h2>
-<p class="s" style="margin:0 0 8px;font-size:.9rem">ថតរូបកាតទន្តបណ្ឌិត កាតនិស្សិត ឬ Name card ប្រព័ន្ធនឹងអានឈ្មោះ ទូរស័ព្ទ ស្ថាប័ន និងកំណត់ថាជាពេទ្យ ឬសិស្សដោយខ្លួនឯង។ រូបត្រូវបានផ្ញើទៅ Claude ដើម្បីអានតែប៉ុណ្ណោះ។</p>
-<div class="seg"><label class="btn" style="margin:0">📷 ថតរូបភាព<input id="cf" type="file" accept="image/*" capture="environment" hidden></label><label class="btn o" style="margin:0;font-size:.9rem">🖼 ជ្រើសពី Gallery (ជ្រើសច្រើនរូប)<input id="gf" type="file" accept="image/*" multiple hidden></label></div>
-<img id="cp2" class="hide" alt="card" style="max-width:100%;border-radius:10px;margin-top:10px">
-<div id="ss" class="err" style="color:var(--mu)"></div></div>
+<div class="c" id="sc">
+  <div class="ai-hd">
+    <div class="ai-ico" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 11h4"/><path d="M10 14h3"/></svg>
+    </div>
+    <div class="ai-tt">
+      <h2><span>ស្កេនកាតថ្មីជាមួយ AI</span><span id="ai-mode" class="ai-pill">Offline QR+OCR</span></h2>
+      <p>ថតរូបកាតទន្តបណ្ឌិត កាតនិស្សិត ឬ Name card (ម្តងបានច្រើនរូប)</p>
+    </div>
+  </div>
+  <div class="ai-act">
+    <label class="ai-main">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M9 10h6"/><path d="M9 14h6"/></svg>
+      <span>ចាប់ផ្តើមស្កេន AI</span>
+      <input id="gf" type="file" accept="image/*" multiple hidden>
+    </label>
+    <label class="ai-cam" title="ថតរូបកាត">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      <input id="cf" type="file" accept="image/*" capture="environment" hidden>
+    </label>
+  </div>
+  <div id="cp2" class="ai-prev hide"></div>
+  <div id="ss" class="err" style="color:var(--mu)"></div>
+  <details id="ai-key-box" class="ai-cfg">
+    <summary>🔑 កំណត់ Gemini AI Key (សម្រាប់ GitHub Pages / Browser)</summary>
+    <label>Gemini API Key (ទទួលបាន Free ពី Google AI Studio)</label>
+    <input id="gem-pub-in" type="password" placeholder="AIza...">
+    <div class="row">
+      <button class="btn sm" id="gem-pub-save" style="margin-top:8px">រក្សាទុក Key</button>
+      <button class="btn o sm" id="gem-pub-clr" style="margin-top:8px">លុប Key</button>
+    </div>
+  </details>
+</div>
 
 <div class="c"><h2>1. ព័ត៌មានផ្ទាល់ខ្លួន</h2>
 <label>ឈ្មោះពេញ / Full name</label><input id="nm" autocomplete="name">
@@ -123,18 +167,40 @@ details summary{cursor:pointer;color:var(--mu);font-size:.9rem}
     <div class="row" style="margin-top:8px">
       <button class="btn g" id="xl">📥 ទាញយក Excel (.xlsx)</button>
       <label class="btn o" style="margin-top:12px">📤 នាំចូល Excel (.xlsx)<input id="imp" type="file" accept=".xlsx,.xls" hidden></label>
+      <button class="btn o hide" id="tg-bak">✈ ផ្ញើ Excel Backup ទៅ Telegram</button>
     </div>
   </div>
 
   <div class="c">
     <details>
-      <summary>⚙️ កំណត់ការភ្ជាប់ Server (សម្រាប់ GitHub Pages → H:\Registration\registrations.xlsx)</summary>
+      <summary>⚙️ កំណត់ការភ្ជាប់ Server, Gemini AI & Telegram Bot</summary>
       <label>Server API URL (ទុកទទេ ដើម្បីប្រើ Server បច្ចុប្បន្ន ឬ Browser Storage)</label>
-      <input id="api-in" placeholder="http://localhost:8000 ឬ https://your-tunnel.trycloudflare.com">
+      <input id="api-in" placeholder="http://localhost:8000 ឬ https://your-app.onrender.com">
       <div class="row">
         <button class="btn sm" id="api-save" style="margin-top:10px">រក្សាទុក & ភ្ជាប់</button>
         <button class="btn o sm" id="api-clr" style="margin-top:10px">កំណត់ឡើងវិញ</button>
       </div>
+      <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">
+      <label>Gemini AI API Key (សម្រាប់ស្កេនកាត) — <span id="gem-st" style="font-weight:600"></span></label>
+      <input id="gem-in" type="password" placeholder="AQ... ឬ AIza... (ពី Google AI Studio)">
+      <label>Gemini Model</label>
+      <input id="gem-mod" placeholder="gemini-3-flash-preview" value="gemini-3-flash-preview">
+      <div class="row">
+        <button class="btn sm" id="gem-save" style="margin-top:10px">រក្សាទុក Gemini Key</button>
+        <button class="btn o sm" id="gem-clr" style="margin-top:10px">លុប Gemini Key</button>
+      </div>
+      <div id="gem-msg" class="okmsg"></div>
+      <hr style="border:0;border-top:1px solid var(--ln);margin:14px 0">
+      <label>Telegram Bot Token (សម្រាប់ជូនដំណឹង & Backup លើ Server/Render) — <span id="tg-st" style="font-weight:600"></span></label>
+      <input id="tg-tok" type="password" placeholder="123456:ABC... (ពី @BotFather)">
+      <label>Telegram Admin Chat ID (ចុចរក Chat ID បន្ទាប់ពីផ្ញើ /start ទៅ Bot)</label>
+      <input id="tg-cid" placeholder="ឧ. 8003576551">
+      <div id="tg-chats" class="row" style="margin-top:8px"></div>
+      <div class="row">
+        <button class="btn sm" id="tg-save" style="margin-top:10px">រក្សាទុក Telegram Bot</button>
+        <button class="btn o sm" id="tg-detect" style="margin-top:10px">🔍 រក Chat ID ពី Bot</button>
+      </div>
+      <div id="tg-msg" class="okmsg"></div>
     </details>
   </div>
 </div>
@@ -142,14 +208,15 @@ details summary{cursor:pointer;color:var(--mu);font-size:.9rem}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 // ===== កែប្រែនៅទីនេះ / EDIT HERE =====
 const CFG={tg:"OngMach",abaName:"MACH ONG",abaNo:"003 528 193 (USD)",abaKhr:"500 633 436 (KHR)",event:"Conference",adminPin:"1234",apiUrl:""};
 const P={Dentist:{"Main Conference":50,"Hands-On":80,"Main + Hands-On":120},Student:{"Main Conference":20,"Hands-On":40,"Main + Hands-On":55},Technician:{"Full-day hands-on course":150}};
 
 const $=i=>document.getElementById(i);
-const LS_ROWS="reg_rows_v1",LS_API="reg_api_url",SS_PIN="reg_admin_pin";
-let cur=null,rows=[],db=null,activeApi=null;
+const LS_ROWS="reg_rows_v1",LS_API="reg_api_url",SS_PIN="reg_admin_pin",LS_GEM_KEY="reg_gemini_key",LS_GEM_MOD="reg_gemini_model";
+let cur=null,rows=[],db=null,activeApi=null,serverAiReady=false,serverAiModel="gemini-3-flash-preview";
 
 const role=()=>document.querySelector('input[name=role]:checked').value;
 function draw(){const r=role(),sel=(document.querySelector('input[name=tkt]:checked')||{}).value;
@@ -198,16 +265,23 @@ async function detectApi(){
         const j=await res.json();
         if(j&&j.ok){
           activeApi=base;
+          serverAiReady=!!j.aiConfigured;
+          serverAiModel=j.geminiModel||"gemini-3-flash-preview";
           badge.textContent="● Excel DB ភ្ជាប់រួច ("+j.db+")";
           badge.classList.add("live");
+          $("tg-bak").classList.remove("hide");
+          refreshAiMode();
           return base;
         }
       }
     }catch(e){}
   }
   activeApi=null;
+  serverAiReady=false;
+  $("tg-bak").classList.add("hide");
   badge.textContent="● Browser Mode (Offline / GitHub Pages)";
   badge.classList.remove("live");
+  refreshAiMode();
   return null;
 }
 
@@ -276,16 +350,283 @@ const s="000201010212"+tl("29",Q.a)+tl("40",Q.b)+"52040000"+"5303840"+tl("54",am
 function drawQR(amt){const el=$("qd"),fb=$("qs");try{const q=qrcode(0,"M");const k=khqr(amt);q.addData(k);q.make();const a=$("abl"),en=encodeURIComponent(k);a.href=/Android/i.test(navigator.userAgent)?"intent://ababank.com?type=payway&qrcode="+en+"#Intent;scheme=abamobilebank;end;":"abamobilebank://ababank.com?type=payway&qrcode="+en;a.classList.remove("hide");
 el.innerHTML='<div style="background:#fff;padding:12px;border-radius:14px;max-width:300px;margin:0 auto 12px;text-align:center;color:#14213d"><div style="background:#e1161c;color:#fff;border-radius:8px;padding:4px;font-weight:700">KHQR · '+Q.n+'</div><div style="font-size:1.4rem;font-weight:700;margin:6px 0">$'+amt.toFixed(2)+'</div>'+q.createSvgTag({cellSize:4,margin:0,scalable:true}).replace("<svg",'<svg style="width:100%;height:auto;display:block"')+'</div>';fb.classList.add("hide")}catch(e){el.innerHTML="";$("abl").classList.add("hide");fb.classList.remove("hide")}}
 
-// ===== Card scan (available inside Claude Artifacts) =====
-(async()=>{try{if(typeof claude==="undefined")return;const s=await claude.use("sample");if(!s)return;const lm=await s.limits();if(!lm.images)return;$("sc").classList.remove("hide");
-const run=async e=>{const fs=[...e.target.files].slice(0,lm.images.maxCount||3);e.target.value="";if(!fs.length)return;const ss=$("ss");ss.style.color="var(--mu)";ss.textContent="កំពុងអានកាត...";
-try{const shrink=async f=>{const bm=await createImageBitmap(f),k=Math.min(1,1600/Math.max(bm.width,bm.height)),cv=document.createElement("canvas");cv.width=bm.width*k;cv.height=bm.height*k;cv.getContext("2d").drawImage(bm,0,0,cv.width,cv.height);return new Promise(r=>cv.toBlob(r,"image/jpeg",.85))};const blobs=await Promise.all(fs.map(shrink));
-$("cp2").src=URL.createObjectURL(blobs[0]);$("cp2").classList.remove("hide");
-const d=await s.json("The attached image(s) are photos (possibly front and back) of one person's ID card, dentist/professional card, student card or business card. Extract the holder's details. Return ONLY JSON: {\"name\":string,\"phone\":string,\"org\":string (clinic, hospital or university),\"role\":\"Dentist\"|\"Student\"|\"Technician\"|\"Unknown\"}. role is Dentist if the card shows Dr., DDS, DMD, dentist, dental clinic or a professional licence; Technician if it shows dental technician, dental lab or ceramist; Student if it shows student, university or school ID. Use empty string for anything not clearly visible; never guess.",{images:blobs,modelTier:"quick",cache:false});
-if(d.name)$("nm").value=d.name;if(d.phone)$("ph").value=d.phone;if(d.org)$("org").value=d.org;
-if(d.role=="Dentist"||d.role=="Student"||d.role=="Technician"){document.querySelector('input[name=role][value='+d.role+']').checked=true;draw()}
-ss.textContent="✓ អានរួច៖ "+(d.role&&d.role!="Unknown"?(d.role=="Technician"?"ជាងធ្មេញ":d.role=="Dentist"?"ទន្តបណ្ឌិត":"និស្សិត"):"មិនស្គាល់ប្រភេទ សូមជ្រើសដោយខ្លួនឯង")+" · សូមពិនិត្យ និងកែប្រែខាងក្រោម"}
-catch(x){ss.style.color="#c0392b";ss.textContent=x&&x.code=="not_granted"?"អ្នកមិនបានអនុញ្ញាតទេ សូមបំពេញដោយដៃ":"អានមិនបាន សូមសាកល្បងម្ដងទៀត ឬបំពេញដោយដៃ"}};$("cf").onchange=run;$("gf").onchange=run}catch(e){}})();
+// ===== Card Scan (Gemini AI + Claude + Offline QR/OCR Fallback) =====
+let claudeSample=null,tessPromise=null,lastPreviewUrls=[];
+const CARD_PROMPT="The attached image(s) are photos (possibly front and back) of one person's ID card, dentist/professional card, student card, or business card (Khmer and/or English). Extract the holder's details. Return ONLY JSON with fields: name, phone, tg (Telegram @username if shown), org (clinic, hospital, dental lab, or university), role ('Dentist'|'Student'|'Technician'|'Unknown'). role is Dentist if the card shows Dr., DDS, DMD, ទន្តបណ្ឌិត, dentist, dental clinic or professional licence; Technician if dental technician, dental lab, ceramist, or ជាងធ្មេញ; Student if student, university, school ID, or និស្សិត. Use empty string for anything not clearly visible; never guess.";
+
+function getBrowserGeminiKey(){return (localStorage.getItem(LS_GEM_KEY)||"").trim()}
+function getGeminiModel(){return (localStorage.getItem(LS_GEM_MOD)||serverAiModel||"gemini-3-flash-preview").trim()||"gemini-3-flash-preview"}
+
+function refreshAiMode(){
+  const badge=$("ai-mode"),box=$("ai-key-box");
+  if(claudeSample){badge.textContent="Claude AI";box.classList.add("hide");return}
+  if(activeApi!==null&&serverAiReady){badge.textContent="Gemini AI (Server)";box.classList.add("hide");return}
+  if(getBrowserGeminiKey()){badge.textContent="Gemini AI (Browser)";box.classList.remove("hide");return}
+  badge.textContent="Offline QR+OCR";
+  box.classList.remove("hide");
+}
+
+function setCardStatus(text,isErr=false){
+  const ss=$("ss");
+  ss.style.color=isErr?"#c0392b":"var(--mu)";
+  ss.textContent=text;
+}
+
+async function prepareScanImages(files){
+  lastPreviewUrls.forEach(u=>URL.revokeObjectURL(u));
+  lastPreviewUrls=[];
+  const shrink=async f=>{
+    const bm=await createImageBitmap(f);
+    const k=Math.min(1,1600/Math.max(bm.width,bm.height));
+    const cv=document.createElement("canvas");
+    cv.width=Math.max(1,Math.round(bm.width*k));
+    cv.height=Math.max(1,Math.round(bm.height*k));
+    const ctx=cv.getContext("2d");
+    ctx.drawImage(bm,0,0,cv.width,cv.height);
+    const blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.85));
+    const dataUrl=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(blob)});
+    const base64=String(dataUrl).split(",")[1]||"";
+    const previewUrl=URL.createObjectURL(blob);
+    lastPreviewUrls.push(previewUrl);
+    return {blob,base64,mimeType:"image/jpeg",canvas:cv,ctx,previewUrl};
+  };
+  const items=await Promise.all([...files].slice(0,3).map(shrink));
+  const wrap=$("cp2");
+  wrap.innerHTML="";
+  items.forEach(it=>{
+    const im=document.createElement("img");
+    im.src=it.previewUrl;im.alt="card preview";
+    wrap.appendChild(im);
+  });
+  wrap.classList.toggle("hide",!items.length);
+  return items;
+}
+
+async function scanWithServerGemini(items){
+  const res=await apiFetch("/api/scan-card",{
+    method:"POST",
+    body:JSON.stringify({images:items.map(i=>({mimeType:i.mimeType,data:i.base64}))})
+  });
+  return res.data;
+}
+
+async function scanWithBrowserGemini(items,apiKey,model){
+  const parts=[{text:CARD_PROMPT},...items.map(i=>({inline_data:{mime_type:i.mimeType,data:i.base64}}))];
+  const models=[...new Set([model,"gemini-3-flash-preview","gemini-flash-latest","gemini-3.1-flash-lite"])];
+  let lastErr="Gemini API request failed";
+  for(const m of models){
+    const url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(m)+":generateContent";
+    const res=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
+      body:JSON.stringify({
+        contents:[{parts}],
+        generationConfig:{
+          temperature:0.1,
+          responseMimeType:"application/json",
+          responseSchema:{
+            type:"OBJECT",
+            properties:{
+              name:{type:"STRING"},phone:{type:"STRING"},tg:{type:"STRING"},org:{type:"STRING"},
+              role:{type:"STRING",enum:["Dentist","Student","Technician","Unknown"]}
+            },
+            required:["name","phone","tg","org","role"]
+          }
+        }
+      })
+    });
+    const body=await res.json().catch(()=>({}));
+    if(!res.ok){
+      lastErr=(body.error&&body.error.message)||("Gemini HTTP "+res.status);
+      if(res.status===404||res.status===429||res.status===503)continue;
+      throw new Error(lastErr);
+    }
+    const txt=(body.candidates||[]).flatMap(c=>(c.content&&c.content.parts)||[]).map(p=>p.text||"").join("\n").trim();
+    if(txt)return JSON.parse(txt.replace(/^```(?:json)?\s*|\s*```$/g,""));
+  }
+  throw new Error(lastErr);
+}
+
+function parseQrPayload(raw){
+  const out={name:"",phone:"",tg:"",org:"",role:"Unknown",extra:""};
+  const s=String(raw||"").trim();
+  if(!s)return out;
+  if(/^BEGIN:VCARD/i.test(s)){
+    s.split(/\r?\n/).forEach(line=>{
+      const [kRaw,...rest]=line.split(":");
+      const val=rest.join(":").trim();
+      const k=kRaw.split(";")[0].toUpperCase();
+      if(k==="FN"&&val)out.name=val;
+      else if(k==="N"&&!out.name&&val)out.name=val.split(";").filter(Boolean).reverse().join(" ").trim();
+      else if(k==="TEL"&&!out.phone&&val)out.phone=val;
+      else if(k==="ORG"&&!out.org&&val)out.org=val.replace(/;/g," ").trim();
+      else if((k==="TITLE"||k==="NOTE")&&val)out.extra+=" "+val;
+    });
+  }else if(/^MECARD:/i.test(s)){
+    s.slice(7).split(";").forEach(seg=>{
+      const idx=seg.indexOf(":");
+      if(idx<0)return;
+      const k=seg.slice(0,idx).toUpperCase(),val=seg.slice(idx+1).trim();
+      if(k==="N"&&!out.name)out.name=val.replace(/,/g," ").trim();
+      else if(k==="TEL"&&!out.phone)out.phone=val;
+      else if(k==="ORG"&&!out.org)out.org=val;
+      else out.extra+=" "+val;
+    });
+  }else{
+    out.extra=s;
+  }
+  const tgM=s.match(/(?:https?:\/\/)?t\.me\/([A-Za-z0-9_]{3,})/i);
+  if(tgM)out.tg="@"+tgM[1];
+  const telM=s.match(/tel:\s*([+\d\s()-]{8,})/i);
+  if(telM&&!out.phone)out.phone=telM[1].trim();
+  return out;
+}
+
+function loadTesseract(){
+  if(window.Tesseract)return Promise.resolve(window.Tesseract);
+  if(!tessPromise){
+    tessPromise=new Promise((resolve,reject)=>{
+      const sc=document.createElement("script");
+      sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+      sc.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error("Tesseract load failed"));
+      sc.onerror=()=>reject(new Error("Cannot load OCR library"));
+      document.head.appendChild(sc);
+    });
+  }
+  return tessPromise;
+}
+
+function parseCardText(rawText,qr){
+  const joined=(rawText+"\n"+(qr.extra||"")).trim();
+  const lines=joined.split(/\r?\n/).map(l=>l.replace(/\s+/g," ").trim()).filter(l=>l.length>=2);
+  let phone=qr.phone||"";
+  if(!phone){
+    const pm=joined.match(/(?:\+?855[\s.-]?|0)\d{2,3}[\s.-]?\d{3}[\s.-]?\d{3,4}/);
+    if(pm)phone=pm[0].replace(/[^\d+]/g,"");
+  }
+  let tg=qr.tg||"";
+  if(!tg){
+    const tm=joined.match(/(?:t\.me\/|telegram\s*[:@]?\s*@?)([A-Za-z0-9_]{4,})/i);
+    if(tm)tg="@"+tm[1].replace(/^@/,"");
+  }
+  const low=joined.toLowerCase();
+  let role="Unknown";
+  if(/\b(technician|ceramist|zirconia|dental\s*lab)\b|ជាងធ្មេញ/.test(low))role="Technician";
+  else if(/\b(student|university|college|school\s*id|faculty)\b|និស្សិត|សាកលវិទ្យាល័យ/.test(low))role="Student";
+  else if(/\b(dr\.?|dds|dmd|dentist|dental|clinic)\b|ទន្តបណ្ឌិត|គ្លីនិក/.test(low))role="Dentist";
+
+  let org=qr.org||"";
+  if(!org){
+    org=lines.find(l=>/(clinic|dental|hospital|university|institute|college|lab|center|គ្លីនិក|មន្ទីរពេទ្យ|សាកលវិទ្យាល័យ)/i.test(l))||"";
+  }
+  let name=qr.name||"";
+  if(!name){
+    const drLine=lines.find(l=>/^(dr\.?|ទន្តបណ្ឌិត)/i.test(l));
+    name=drLine||lines.find(l=>l!==org&&!/[@\d]/.test(l)&&!/^(tel|phone|mobile|email|web|facebook|telegram|address|id)/i.test(l))||"";
+  }
+  return {name,phone,tg,org,role};
+}
+
+async function scanWithQrAndOcr(items){
+  let qr={name:"",phone:"",tg:"",org:"",role:"Unknown",extra:""};
+  if(typeof jsQR==="function"){
+    for(const it of items){
+      const imgData=it.ctx.getImageData(0,0,it.canvas.width,it.canvas.height);
+      const hit=jsQR(imgData.data,imgData.width,imgData.height);
+      if(hit&&hit.data){
+        const parsed=parseQrPayload(hit.data);
+        qr={
+          name:qr.name||parsed.name,phone:qr.phone||parsed.phone,
+          tg:qr.tg||parsed.tg,org:qr.org||parsed.org,
+          role:qr.role!=="Unknown"?qr.role:parsed.role,
+          extra:(qr.extra+" "+parsed.extra).trim()
+        };
+      }
+    }
+  }
+  let ocrText="";
+  try{
+    setCardStatus("⏳ កំពុងអានអក្សរលើកាត (Offline OCR)...");
+    const T=await loadTesseract();
+    let worker;
+    try{worker=await T.createWorker(["eng","khm"])}
+    catch(e){worker=await T.createWorker("eng")}
+    try{
+      for(const it of items){
+        const r=await worker.recognize(it.canvas);
+        if(r&&r.data&&r.data.text)ocrText+="\n"+r.data.text;
+      }
+    }finally{await worker.terminate()}
+  }catch(e){}
+  return parseCardText(ocrText,qr);
+}
+
+function applyCardResult(d,providerLabel){
+  if(d.name)$("nm").value=d.name;
+  if(d.phone)$("ph").value=d.phone;
+  if(d.tg)$("tg").value=d.tg;
+  if(d.org)$("org").value=d.org;
+  if(d.role==="Dentist"||d.role==="Student"||d.role==="Technician"){
+    document.querySelector("input[name=role][value="+d.role+"]").checked=true;
+    draw();
+  }
+  const roleKh=d.role==="Technician"?"ជាងធ្មេញ":d.role==="Dentist"?"ទន្តបណ្ឌិត":d.role==="Student"?"និស្សិត":"មិនស្គាល់ប្រភេទ សូមជ្រើសដោយខ្លួនឯង";
+  const foundAny=!!(d.name||d.phone||d.org||d.tg);
+  if(!foundAny){
+    setCardStatus("រកមិនឃើញព័ត៌មានច្បាស់ទេ ("+providerLabel+") · សូមសាកល្បងរូបច្បាស់ជាងនេះ ឬបំពេញដោយដៃ",true);
+    return;
+  }
+  setCardStatus("✓ អានរួច ("+providerLabel+")៖ "+roleKh+" · សូមពិនិត្យ និងកែប្រែខាងក្រោម");
+}
+
+async function runCardScan(e){
+  const files=[...(e.target.files||[])];
+  e.target.value="";
+  if(!files.length)return;
+  setCardStatus("⏳ កំពុងដំណើរការស្កេនកាត...");
+  try{
+    const prepared=await prepareScanImages(files);
+    if(claudeSample){
+      const d=await claudeSample.json(CARD_PROMPT,{images:prepared.map(p=>p.blob),modelTier:"quick",cache:false});
+      applyCardResult(d,"Claude AI");return;
+    }
+    if(activeApi!==null&&serverAiReady){
+      try{
+        const d=await scanWithServerGemini(prepared);
+        applyCardResult(d,"Gemini AI");return;
+      }catch(err){setCardStatus("⚠️ Server AI error ("+err.message+") · កំពុងប្តូរទៅ OCR...")}
+    }
+    const bKey=getBrowserGeminiKey();
+    if(bKey){
+      try{
+        const d=await scanWithBrowserGemini(prepared,bKey,getGeminiModel());
+        applyCardResult(d,"Gemini AI");return;
+      }catch(err){setCardStatus("⚠️ Gemini Key error ("+err.message+") · កំពុងប្តូរទៅ OCR...")}
+    }
+    const fb=await scanWithQrAndOcr(prepared);
+    applyCardResult(fb,"Offline QR+OCR");
+  }catch(err){
+    setCardStatus(err&&err.code==="not_granted"?"អ្នកមិនបានអនុញ្ញាតទេ សូមបំពេញដោយដៃ":"អានមិនបាន សូមសាកល្បងម្ដងទៀត ឬបំពេញដោយដៃ",true);
+  }
+}
+
+$("cf").onchange=runCardScan;
+$("gf").onchange=runCardScan;
+$("gem-pub-in").value=getBrowserGeminiKey();
+$("gem-pub-save").onclick=()=>{
+  const k=$("gem-pub-in").value.trim();
+  if(k)localStorage.setItem(LS_GEM_KEY,k);else localStorage.removeItem(LS_GEM_KEY);
+  refreshAiMode();
+  setCardStatus(k?"✓ បានរក្សាទុក Gemini API Key រួចរាល់":"បានលុប Gemini API Key");
+};
+$("gem-pub-clr").onclick=()=>{
+  localStorage.removeItem(LS_GEM_KEY);
+  $("gem-pub-in").value="";
+  refreshAiMode();
+  setCardStatus("បានលុប Gemini API Key (កំពុងប្រើ Offline QR+OCR)");
+};
+
+(async()=>{try{if(typeof claude==="undefined")return;const s=await claude.use("sample");if(!s)return;const lm=await s.limits();if(lm&&lm.images){claudeSample=s;refreshAiMode()}}catch(e){}})();
 
 // ===== Admin & Excel DB =====
 const F=["ref","name","phone","tg","org","type","ticket","amount","paid","date"];
@@ -344,10 +685,34 @@ function showAdminLocked(){
   $("pin-er").textContent="";
 }
 
+async function loadAdminAiSettings(){
+  $("gem-msg").textContent="";
+  $("tg-msg").textContent="";
+  $("gem-mod").value=getGeminiModel();
+  if(activeApi!==null){
+    try{
+      const s=await apiFetch("/api/admin/settings");
+      serverAiReady=!!s.geminiConfigured;
+      serverAiModel=s.geminiModel||"gemini-3-flash-preview";
+      $("gem-mod").value=serverAiModel;
+      $("gem-st").textContent=s.geminiConfigured?("Server Ready ("+s.geminiMask+")"):"Not set on server";
+      $("tg-st").textContent=s.telegramBotConfigured?("Bot Ready ("+s.telegramTokenMask+")"):"Not set";
+      $("tg-cid").value=s.telegramChatId||"";
+      refreshAiMode();
+      return;
+    }catch(e){}
+  }
+  const bk=getBrowserGeminiKey();
+  $("gem-st").textContent=bk?"Browser Key Saved":"Not set (QR+OCR fallback)";
+  $("tg-st").textContent="ត្រូវការ Server / Render";
+  refreshAiMode();
+}
+
 function showAdminUnlocked(){
   $("pin-box").classList.add("hide");
   $("adm-body").classList.remove("hide");
   $("api-in").value=localStorage.getItem(LS_API)||CFG.apiUrl||"";
+  loadAdminAiSettings();
 }
 
 function lockAdmin(){
@@ -501,12 +866,84 @@ $("api-save").onclick=async()=>{
   if(val)localStorage.setItem(LS_API,val);else localStorage.removeItem(LS_API);
   await detectApi();
   if(activeApi!==null)await loadAdminRows();
+  await loadAdminAiSettings();
 };
 $("api-clr").onclick=async()=>{
   localStorage.removeItem(LS_API);
   $("api-in").value="";
   await detectApi();
   await loadAdminRows();
+  await loadAdminAiSettings();
+};
+$("gem-save").onclick=async()=>{
+  const key=$("gem-in").value.trim(),model=($("gem-mod").value||"gemini-3-flash-preview").trim();
+  if(model)localStorage.setItem(LS_GEM_MOD,model);
+  if(activeApi!==null){
+    try{
+      const payload={geminiModel:model};
+      if(key)payload.geminiApiKey=key;
+      const res=await apiFetch("/api/admin/settings",{method:"POST",body:JSON.stringify(payload)});
+      $("gem-in").value="";
+      serverAiReady=!!res.geminiConfigured;
+      serverAiModel=res.geminiModel||model;
+      await loadAdminAiSettings();
+      $("gem-msg").textContent="✓ បានរក្សាទុកការកំណត់ Gemini AI លើ Server";
+      return;
+    }catch(err){alert(err.message||"Save Gemini settings failed");return}
+  }
+  if(key)localStorage.setItem(LS_GEM_KEY,key);
+  $("gem-in").value="";
+  $("gem-pub-in").value=getBrowserGeminiKey();
+  await loadAdminAiSettings();
+  $("gem-msg").textContent="✓ បានរក្សាទុក Gemini Key ក្នុង Browser";
+};
+$("gem-clr").onclick=async()=>{
+  localStorage.removeItem(LS_GEM_KEY);
+  localStorage.removeItem(LS_GEM_MOD);
+  $("gem-in").value="";
+  $("gem-pub-in").value="";
+  if(activeApi!==null){
+    try{
+      await apiFetch("/api/admin/settings",{method:"POST",body:JSON.stringify({geminiApiKey:""})});
+    }catch(err){alert(err.message||"Clear failed");return}
+  }
+  await loadAdminAiSettings();
+  $("gem-msg").textContent="បានលុប Gemini Key (ប្រើ Offline QR+OCR)";
+};
+$("tg-save").onclick=async()=>{
+  if(activeApi===null){alert("មុខងារ Telegram Bot ដំណើរការជាមួយ Server / Render ប៉ុណ្ណោះ");return}
+  const tok=$("tg-tok").value.trim(),cid=$("tg-cid").value.trim();
+  try{
+    const payload={telegramChatId:cid};
+    if(tok)payload.telegramBotToken=tok;
+    await apiFetch("/api/admin/settings",{method:"POST",body:JSON.stringify(payload)});
+    $("tg-tok").value="";
+    await loadAdminAiSettings();
+    $("tg-msg").textContent="✓ បានរក្សាទុកការកំណត់ Telegram Bot";
+  }catch(err){alert(err.message||"Save Telegram failed")}
+};
+$("tg-detect").onclick=async()=>{
+  if(activeApi===null){alert("មុខងារ Telegram Bot ដំណើរការជាមួយ Server / Render ប៉ុណ្ណោះ");return}
+  $("tg-chats").innerHTML="";
+  try{
+    const res=await apiFetch("/api/admin/telegram-chats");
+    const chats=res.chats||[];
+    if(!chats.length){$("tg-msg").textContent="មិនទាន់មានសារថ្មីទេ · សូមផ្ញើ /start ទៅ Bot ជាមុនសិន";return}
+    chats.forEach(c=>{
+      const b=document.createElement("button");
+      b.className="btn o sm";
+      b.textContent=(c.name||"Chat")+" ("+c.id+")";
+      b.onclick=()=>{$("tg-cid").value=c.id;$("tg-msg").textContent="បានជ្រើស Chat ID: "+c.id+" — ចុច រក្សាទុក Telegram Bot"};
+      $("tg-chats").appendChild(b);
+    });
+  }catch(err){alert(err.message||"Detect failed")}
+};
+$("tg-bak").onclick=async()=>{
+  if(activeApi===null)return;
+  try{
+    await apiFetch("/api/admin/telegram-backup",{method:"POST",body:"{}"});
+    $("adm-msg").textContent="✓ បានផ្ញើ registrations.xlsx ទៅ Telegram រួចរាល់";
+  }catch(err){alert(err.message||"Telegram backup failed")}
 };
 
 async function openAdminTab(){
