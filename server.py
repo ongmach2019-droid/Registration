@@ -105,9 +105,9 @@ HEADER_ALIASES = {
 }
 
 PRICING: dict[str, dict[str, float]] = {
-    "Dentist": {"Main Conference": 50, "Hands-On": 80, "Main + Hands-On": 120},
-    "Student": {"Main Conference": 20, "Hands-On": 40, "Main + Hands-On": 55},
-    "Technician": {"Full-day hands-on course": 150},
+    "Dentist": {"From Framework to Final Glaze": 35, "Main Conference": 50, "Hands-On": 80, "Main + Hands-On": 120},
+    "Student": {"From Framework to Final Glaze": 35, "Main Conference": 20, "Hands-On": 40, "Main + Hands-On": 55},
+    "Technician": {"From Framework to Final Glaze": 35, "Full-day hands-on course": 150},
 }
 
 DB_LOCK = threading.Lock()
