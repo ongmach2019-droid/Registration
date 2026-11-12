@@ -998,7 +998,7 @@ class RegistrationHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         try:
-            if path in {"/", "/index.html"}:
+            if path in {"/", "/index.html", "/admin", "/admin/"}:
                 if not HTML_PATH.exists():
                     self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "index.html not found."})
                     return
