@@ -817,51 +817,80 @@ def sync_with_render_once() -> dict[str, Any]:
 
                 merged_list: list[dict[str, Any]] = []
                 push_to_render: list[dict[str, Any]] = []
+                delete_from_render: list[str] = []
                 local_changed = False
                 pulled = 0
 
                 for local_row in local_list:
                     ref = local_row["ref"]
-                    deleted_set.discard(ref)
-                    if ref not in remote_by_ref:
-                        merged_list.append(local_row)
-                        push_to_render.append(local_row)
-                        continue
-
-                    remote_row = remote_by_ref[ref]
-                    prev_row = prev_by_ref.get(ref)
-                    if _row_sig(local_row) == _row_sig(remote_row):
-                        merged_list.append(local_row)
-                        continue
-
-                    if prev_row and _row_sig(local_row) != _row_sig(prev_row) and _row_sig(remote_row) == _row_sig(prev_row):
-                        merged_list.append(local_row)
-                        push_to_render.append(local_row)
-                    elif prev_row and _row_sig(remote_row) != _row_sig(prev_row) and _row_sig(local_row) == _row_sig(prev_row):
-                        merged_list.append(remote_row)
+                    if ref in deleted_set:
+                        # Row was deleted; ensure it is purged from local Excel
                         local_changed = True
-                        pulled += 1
-                    else:
-                        chosen = dict(remote_row)
-                        if local_row.get("paid") or remote_row.get("paid"):
-                            chosen["paid"] = True
-                        if _row_sig(chosen) != _row_sig(local_row):
+                        continue
+
+                    if ref in remote_by_ref:
+                        remote_row = remote_by_ref[ref]
+                        prev_row = prev_by_ref.get(ref)
+                        if _row_sig(local_row) == _row_sig(remote_row):
+                            merged_list.append(local_row)
+                            continue
+
+                        if prev_row and _row_sig(local_row) != _row_sig(prev_row) and _row_sig(remote_row) == _row_sig(prev_row):
+                            merged_list.append(local_row)
+                            push_to_render.append(local_row)
+                        elif prev_row and _row_sig(remote_row) != _row_sig(prev_row) and _row_sig(local_row) == _row_sig(prev_row):
+                            merged_list.append(remote_row)
                             local_changed = True
                             pulled += 1
-                        if _row_sig(chosen) != _row_sig(remote_row):
-                            push_to_render.append(chosen)
-                        merged_list.append(chosen)
+                        else:
+                            chosen = dict(remote_row)
+                            if local_row.get("paid") or remote_row.get("paid"):
+                                chosen["paid"] = True
+                            if _row_sig(chosen) != _row_sig(local_row):
+                                local_changed = True
+                                pulled += 1
+                            if _row_sig(chosen) != _row_sig(remote_row):
+                                push_to_render.append(chosen)
+                            merged_list.append(chosen)
+                    else:
+                        # Row exists locally, but NOT on remote
+                        if ref in prev_by_ref:
+                            # It previously existed on both, but is now gone from remote -> remote DELETED it!
+                            deleted_set.add(ref)
+                            local_changed = True
+                            # Do not add to merged_list, do not push to render
+                        else:
+                            # Brand new row created locally
+                            merged_list.append(local_row)
+                            push_to_render.append(local_row)
 
                 for remote_row in reversed(remote_list):
                     ref = remote_row["ref"]
-                    if ref in local_by_ref or ref in deleted_set:
+                    if ref in local_by_ref:
                         continue
-                    merged_list.append(remote_row)
-                    local_changed = True
-                    pulled += 1
+
+                    if ref in deleted_set:
+                        delete_from_render.append(ref)
+                        continue
+
+                    if ref in prev_by_ref:
+                        # Previously existed on both, but now gone from local -> local DELETED it!
+                        deleted_set.add(ref)
+                        delete_from_render.append(ref)
+                    else:
+                        # Brand new row created on remote
+                        merged_list.append(remote_row)
+                        local_changed = True
+                        pulled += 1
 
                 if local_changed:
                     _write_rows_unlocked(merged_list)
+
+            for ref_del in delete_from_render:
+                try:
+                    _render_request("DELETE", f"/api/registrations/{quote(ref_del, safe='')}")
+                except Exception:
+                    pass
 
             if push_to_render:
                 _render_request("POST", "/api/registrations/bulk", {"rows": push_to_render})
@@ -873,9 +902,10 @@ def sync_with_render_once() -> dict[str, Any]:
                 }
             )
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            action = f"Synced ({len(merged_list)} total, +{pulled} pulled, +{len(push_to_render)} pushed)"
+            deleted_cnt = len(delete_from_render)
+            action = f"Synced ({len(merged_list)} total, +{pulled} pulled, +{len(push_to_render)} pushed, -{deleted_cnt} remote-deleted)"
             _SYNC_STATUS.update({"lastSyncAt": now_str, "lastError": "", "lastAction": action})
-            if pulled or push_to_render:
+            if pulled or push_to_render or deleted_cnt or local_changed:
                 sys.stdout.write(f"[render-sync] {action} -> {DB_PATH.name}\n")
             return {"ok": True, "total": len(merged_list), "pulled": pulled, "pushed": len(push_to_render), "lastSyncAt": now_str}
         except urllib.error.HTTPError as exc:
