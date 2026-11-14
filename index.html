@@ -22,6 +22,7 @@ h1{font-size:1.5rem;margin:8px 0 2px}p.s{color:var(--mu);margin:0 0 16px}
 .c h2{font-size:1.05rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 label{display:block;font-size:.9rem;color:var(--mu);margin:10px 0 4px}
 input,textarea{width:100%;padding:10px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{ -webkit-box-shadow:0 0 0 1000px var(--bg) inset!important;-webkit-text-fill-color:var(--tx)!important;transition:background-color 5000s ease-in-out 0s}
 .seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
 .seg label,.tk label{margin:0;color:var(--tx)}
 .opt{display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid var(--ln);border-radius:12px;cursor:pointer}
@@ -92,10 +93,10 @@ details summary{cursor:pointer;color:var(--mu);font-size:.9rem}
 </div>
 
 <div class="c"><h2>1. ព័ត៌មានផ្ទាល់ខ្លួន</h2>
-<label>ឈ្មោះពេញ / Full name</label><input id="nm" autocomplete="name">
-<label>លេខទូរស័ព្ទ / Phone</label><input id="ph" inputmode="tel" autocomplete="tel">
-<label>Telegram (@username)</label><input id="tg" placeholder="@">
-<label>គ្លីនិក ឬ សាកលវិទ្យាល័យ / Clinic or University</label><input id="org"></div>
+<label>ឈ្មោះពេញ / Full name</label><input id="nm" name="reg_name" autocomplete="off">
+<label>លេខទូរស័ព្ទ / Phone</label><input id="ph" name="reg_phone" inputmode="tel" autocomplete="off">
+<label>Telegram (@username)</label><input id="tg" name="reg_telegram_handle" placeholder="@" autocomplete="off" autocapitalize="none" spellcheck="false">
+<label>គ្លីនិក ឬ សាកលវិទ្យាល័យ / Clinic or University</label><input id="org" name="reg_org" autocomplete="off"></div>
 
 <div class="c"><h2>2. សូមជ្រើសរើសតាមវិជ្ជាជីវៈ:</h2>
 <div class="seg"><label class="opt"><input type="radio" name="role" value="Dentist" checked> ទន្តបណ្ឌិត Dentist</label>
@@ -1007,6 +1008,20 @@ async function openAdminTab(){
 }
 
 const isAdminRoute=/^\/admin\/?$/i.test(location.pathname)||new URLSearchParams(location.search).get("admin")==="1"||location.hash==="#admin";
+
+const clearStaleAutofill=()=>{
+  if(!cur){
+    const tg=$("tg");
+    if(tg&&(tg.value==="8805554075"||/^\d{7,}$/.test(tg.value.trim()))){
+      tg.value="";
+    }
+  }
+};
+clearStaleAutofill();
+setTimeout(clearStaleAutofill,50);
+setTimeout(clearStaleAutofill,200);
+setTimeout(clearStaleAutofill,600);
+window.addEventListener("pageshow",clearStaleAutofill);
 
 (async()=>{
   if(isAdminRoute)show(3);
